@@ -28,5 +28,4 @@ Currently, the program is built through CMake. No one else has yet built the
 engine, so I can not give any tips for the correct trouble shooting
 techniques. My email and instagram are in my profile, so please get 
 in touch if you have any issues.
-issue.
 
