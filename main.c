@@ -64,6 +64,8 @@ int intersect(Ray ray, Boundary wall, Vector2D* pt) {
 }
 
 int main(int argc, char* args[]) {
+    Uint8* keystate = SDL_GetKeyboardState(NULL);
+
     SDL_Init(SDL_INIT_VIDEO);
     gWindow = SDL_CreateWindow("Ray Tracing", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
@@ -88,7 +90,7 @@ int main(int argc, char* args[]) {
 
     Vector2D mousePos = { 0, 0 };
 
-    View view= {90.0, 30, 0.0, 0.0};
+    View view= {0.0, 30, 0.0, 0.0};
     view.startAngle = view.heading - (.5 * view.FOV);
     view.endAngle = view.heading + (.5 * view.FOV);
 
@@ -112,6 +114,40 @@ int main(int argc, char* args[]) {
             else if (e.type == SDL_MOUSEMOTION) {
                 mousePos.x = e.motion.x;
                 mousePos.y = e.motion.y;
+            }
+            else if (e.type == SDL_KEYDOWN){
+                if(e.key.keysym.sym == 'a'){
+                    view.heading -= 5;
+                    if(view.heading < 0){
+                        view.heading = 360;
+                    }
+                    view.startAngle = view.heading - (.5 * view.FOV);
+                    view.endAngle = view.heading + (.5 * view.FOV);
+
+                    if(view.startAngle < 0)
+                        view.startAngle += 360;
+                    if(view.endAngle > 360)
+                        view.endAngle -= 360;
+
+                    view.startAngle = view.startAngle * (M_PI / 180);
+                    view.endAngle = view.endAngle * (M_PI / 180);
+                }
+                else if(e.key.keysym.sym == 'd'){
+                    view.heading += 5;
+                    if(view.heading > 360){
+                        view.heading = 0;
+                    }
+                    view.startAngle = view.heading - (.5 * view.FOV);
+                    view.endAngle = view.heading + (.5 * view.FOV);
+
+                    if(view.startAngle < 0)
+                        view.startAngle += 360;
+                    if(view.endAngle > 360)
+                        view.endAngle -= 360;
+
+                    view.startAngle = view.startAngle * (M_PI / 180);
+                    view.endAngle = view.endAngle * (M_PI / 180);
+                }
             }
         }
 
