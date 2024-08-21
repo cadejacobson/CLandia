@@ -63,9 +63,47 @@ int intersect(Ray ray, Boundary wall, Vector2D* pt) {
     return 0;
 }
 
-int main(int argc, char* args[]) {
-    Uint8* keystate = SDL_GetKeyboardState(NULL);
+Boundary* getBoundaries(int file_used, char* filename){
+    if(file_used == 0){
+        FILE* file = fopen(filename, "r");
+        if (!file) {
+            printf("Failed to open file.\n");
+            return NULL;
+        }
+        int num_boundaries = 0;
 
+        char line[256];
+        if (fgets(line, sizeof(line), file)) {
+            // Convert the first line to an integer
+            char* end;
+            num_boundaries = strtol(line, &end, 10);
+
+            if (end == line) {
+                printf("No valid integer found in the first line.\n");
+            }
+        } else {
+            printf("Failed to read the first line.\n");
+        }        Boundary* boundaries = (Boundary*)malloc(num_boundaries * sizeof(Boundary));
+
+        for (int i = 0; i < num_boundaries; i++) {
+            fscanf(file, "%f,%f %f,%f", &boundaries[i].a.x, &boundaries[i].a.y,
+                   &boundaries[i].b.x, &boundaries[i].b.y);
+        }
+
+        fclose(file);
+        return boundaries;
+    }
+    static Boundary boundaries[NUM_BOUNDARIES];
+    for (int i = 0; i < NUM_BOUNDARIES; i++) {
+        Vector2D start = { .x = (float)(rand() % SCREEN_WIDTH), .y = (float)(rand() % SCREEN_HEIGHT) };
+        Vector2D end = { .x = (float)(rand() % SCREEN_WIDTH), .y = (float)(rand() % SCREEN_HEIGHT) };
+        boundaries[i].a = start;
+        boundaries[i].b = end;
+    }
+    return boundaries;
+}
+
+int main(int argc, char* args[]) {
     SDL_Init(SDL_INIT_VIDEO);
     gWindow = SDL_CreateWindow("Ray Tracing", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
@@ -80,13 +118,7 @@ int main(int argc, char* args[]) {
     SDL_Event e;
     int quit = 0;
 
-    Boundary boundaries[NUM_BOUNDARIES];
-    for (int i = 0; i < NUM_BOUNDARIES; i++) {
-        Vector2D start = { .x = (float)(rand() % SCREEN_WIDTH), .y = (float)(rand() % SCREEN_HEIGHT) };
-        Vector2D end = { .x = (float)(rand() % SCREEN_WIDTH), .y = (float)(rand() % SCREEN_HEIGHT) };
-        boundaries[i].a = start;
-        boundaries[i].b = end;
-    }
+    Boundary *boundaries = getBoundaries(0, "../levels/test01.level");
 
     Vector2D mousePos = { 0, 0 };
 
@@ -101,7 +133,6 @@ int main(int argc, char* args[]) {
 
     view.startAngle = view.startAngle * (M_PI / 180);
     view.endAngle = view.endAngle * (M_PI / 180);
-    // this calculation is in degrees, but the loop below uses radians. Figure your shit out
 
     printf("Start Angle: %f\n", view.startAngle);
     printf("End Angle: %f\n", view.endAngle);
