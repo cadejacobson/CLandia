@@ -24,6 +24,13 @@ typedef struct {
     Vector2D a, b;
 } Boundary;
 
+typedef struct {
+    float heading;
+    int FOV;
+    float startAngle;
+    float endAngle;
+} View;
+
 void drawLine(Vector2D a, Vector2D b) {
     SDL_RenderDrawLine(gRenderer, (int)a.x, (int)a.y, (int)b.x, (int)b.y);
 }
@@ -57,6 +64,8 @@ int intersect(Ray ray, Boundary wall, Vector2D* pt) {
 }
 
 int main(int argc, char* args[]) {
+    Uint8* keystate = SDL_GetKeyboardState(NULL);
+
     SDL_Init(SDL_INIT_VIDEO);
     gWindow = SDL_CreateWindow("Ray Tracing", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
@@ -81,6 +90,22 @@ int main(int argc, char* args[]) {
 
     Vector2D mousePos = { 0, 0 };
 
+    View view= {0.0, 30, 0.0, 0.0};
+    view.startAngle = view.heading - (.5 * view.FOV);
+    view.endAngle = view.heading + (.5 * view.FOV);
+
+    if(view.startAngle < 0)
+        view.startAngle += 360;
+    if(view.endAngle > 360)
+        view.endAngle -= 360;
+
+    view.startAngle = view.startAngle * (M_PI / 180);
+    view.endAngle = view.endAngle * (M_PI / 180);
+    // this calculation is in degrees, but the loop below uses radians. Figure your shit out
+
+    printf("Start Angle: %f\n", view.startAngle);
+    printf("End Angle: %f\n", view.endAngle);
+
     while (!quit) {
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
@@ -89,6 +114,40 @@ int main(int argc, char* args[]) {
             else if (e.type == SDL_MOUSEMOTION) {
                 mousePos.x = e.motion.x;
                 mousePos.y = e.motion.y;
+            }
+            else if (e.type == SDL_KEYDOWN){
+                if(e.key.keysym.sym == 'a'){
+                    view.heading -= 5;
+                    if(view.heading < 0){
+                        view.heading = 360;
+                    }
+                    view.startAngle = view.heading - (.5 * view.FOV);
+                    view.endAngle = view.heading + (.5 * view.FOV);
+
+                    if(view.startAngle < 0)
+                        view.startAngle += 360;
+                    if(view.endAngle > 360)
+                        view.endAngle -= 360;
+
+                    view.startAngle = view.startAngle * (M_PI / 180);
+                    view.endAngle = view.endAngle * (M_PI / 180);
+                }
+                else if(e.key.keysym.sym == 'd'){
+                    view.heading += 5;
+                    if(view.heading > 360){
+                        view.heading = 0;
+                    }
+                    view.startAngle = view.heading - (.5 * view.FOV);
+                    view.endAngle = view.heading + (.5 * view.FOV);
+
+                    if(view.startAngle < 0)
+                        view.startAngle += 360;
+                    if(view.endAngle > 360)
+                        view.endAngle -= 360;
+
+                    view.startAngle = view.startAngle * (M_PI / 180);
+                    view.endAngle = view.endAngle * (M_PI / 180);
+                }
             }
         }
 
@@ -103,24 +162,54 @@ int main(int argc, char* args[]) {
 
         // Cast rays from mouse position
         SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
-        for (float angle = 0; angle < 360; angle += 1) {
-            Ray ray = { mousePos, {cos(angle), sin(angle)} };
-            Vector2D closestPt = { INT_MAX, INT_MAX };
-            float closestDist = INFINITY;
-            for (int i = 0; i < NUM_BOUNDARIES; ++i) {
-                Vector2D pt;
-                if (intersect(ray, boundaries[i], &pt)) {
-                    float dist = sqrt(pow(pt.x - mousePos.x, 2) + pow(pt.y - mousePos.y, 2));
-                    if (dist < closestDist) {
-                        closestDist = dist;
-                        closestPt = pt;
+
+        double angle = 0.0;
+        double increment = 0.0174533;
+        while(angle < 6.2831853071){
+            if(view.startAngle > view.endAngle && (angle > view.startAngle || angle < view.endAngle)){
+                if(angle > view.startAngle || angle < view.endAngle){
+                    Ray ray = { mousePos, {cos(angle), sin(angle)} };
+                    Vector2D closestPt = { INT_MAX, INT_MAX };
+                    float closestDist = INFINITY;
+                    for (int i = 0; i < NUM_BOUNDARIES; ++i) {
+                        Vector2D pt;
+                        if (intersect(ray, boundaries[i], &pt)) {
+                            float dist = sqrt(pow(pt.x - mousePos.x, 2) + pow(pt.y - mousePos.y, 2));
+                            if (dist < closestDist) {
+                                closestDist = dist;
+                                closestPt = pt;
+                            }
+                        }
+                    }
+                    // Draw the line only if a valid intersection point is found
+                    if (closestPt.x != INT_MAX && closestPt.y != INT_MAX) {
+                        drawLine(mousePos, closestPt);
+                    }
+                }
+
+            }
+            else if(view.startAngle < view.endAngle && (angle > view.startAngle && angle < view.endAngle)){
+                if(angle > view.startAngle || angle < view.endAngle){
+                    Ray ray = { mousePos, {cos(angle), sin(angle)} };
+                    Vector2D closestPt = { INT_MAX, INT_MAX };
+                    float closestDist = INFINITY;
+                    for (int i = 0; i < NUM_BOUNDARIES; ++i) {
+                        Vector2D pt;
+                        if (intersect(ray, boundaries[i], &pt)) {
+                            float dist = sqrt(pow(pt.x - mousePos.x, 2) + pow(pt.y - mousePos.y, 2));
+                            if (dist < closestDist) {
+                                closestDist = dist;
+                                closestPt = pt;
+                            }
+                        }
+                    }
+                    // Draw the line only if a valid intersection point is found
+                    if (closestPt.x != INT_MAX && closestPt.y != INT_MAX) {
+                        drawLine(mousePos, closestPt);
                     }
                 }
             }
-            // Draw the line only if a valid intersection point is found
-            if (closestPt.x != INT_MAX && closestPt.y != INT_MAX) {
-                drawLine(mousePos, closestPt);
-            }
+            angle = angle + increment;
         }
 
         SDL_RenderPresent(gRenderer);
