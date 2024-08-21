@@ -134,9 +134,6 @@ int main(int argc, char* args[]) {
     view.startAngle = view.startAngle * (M_PI / 180);
     view.endAngle = view.endAngle * (M_PI / 180);
 
-    printf("Start Angle: %f\n", view.startAngle);
-    printf("End Angle: %f\n", view.endAngle);
-
     while (!quit) {
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
